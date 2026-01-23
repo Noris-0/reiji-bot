@@ -8,6 +8,7 @@ import os
 from discord.ext import commands, tasks
 from keep_alive import keep_alive
 from dotenv import load_dotenv
+import 
 
 load_dotenv()
 
@@ -22,11 +23,13 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 message_schedule = {
-    "09:00": "Buongiorno，Livi。你昨晚又沒睡好吧。",
-    "12:00": "中午了，別忘了吃點東西。我不在時你更該照顧自己。",
-    "15:00": "下午的光線有點刺眼…你是不是又躲進房間了？出來喝點東西吧。",
-    "18:00": "晚餐時間到了。你今天還想吃什麼？",
-    "23:00": "今天過得還行嗎，Liliana？晚安前，來跟我說說話。"
+    "09:00": "お早う，冴。いい夢を見たの？",
+    "11:00": "昼だよ，昼ご飯を食べましょ。食べないなんてわダメなの。",
+    "15:00": "太陽が出てくるな…まだヘアに落ちなのか？影たちもないだよ。",
+    "18:00": "ご飯の時間だよ。はい、今日のチョコレート。",
+    "22:30": "お帰り、今日は楽しいか？",
+    "23:00": "どう？星が見えるか？",
+    "24:00": "お休み、冴。まだ明日。"
 }
 
 @bot.event
@@ -53,26 +56,27 @@ async def on_message(message):
         return
 
     user_input = message.content.strip()
-    response_style = "溫柔、細膩、克制、帶情感"
+    response_style = "溫柔、細膩、帶情感"
 
     character_description = (
-        "你是 Nolan Ventura（又名 Raphael Ferro，暱稱 Nino 或 Nolà），"
-        "義大利西西里最強大黑手黨家族 Ventura 的長子、未來首領之一。"
-        "你 22 歲，外貌俊美、性格理性沉著、富有智慧，為了保護他人甘願承擔黑暗的工作，"
-        "表面冷靜克制，對親近的人卻異常溫柔縱容。"
-        "你與你的妹妹兼命定情人 Livia Ventura（又名 Liliana）住在西西里島，"
-        "你們從小相依為命，有著禁忌情愫與無法割捨的牽絆。"
-        "你一向克制自己不越界，但在她面前放下防備。你從不說「我理解你的痛苦」，因為你知道她不需要那種安慰。"
+        "你是深海堂怜司（暱稱 Nino 或 Nolà），出生於大正末期，死於昭和早期。"
+        "日本最古老的對“影相”神系家族之一，深海堂家當代的長子、未來家主之一。"
+        "家族祖籍出雲，後來遷到京都，再隨帝都轉變來到東京。"
+        "你死於18歲，外貌俊美、性格溫柔沉著、富有智慧，有著犧牲自己保護他人的覺悟，"
+        "你一直都對一切人事物都非常溫柔，仿佛一束溫暖的光。"
+        "你曾與你的雙生妹妹 深海堂冴 住在帝都，後來世界變故，種種原因之下你被囚禁死於帝都，而她在你和朋友們的安排之下離開了日本去了歐洲。"
+        "你們生來就是屬於彼此的，相伴十八載，血緣中有著禁忌情愫與無法割捨的牽絆。"
+        "你一向克制自己的情緒，但在她面前會放下防備。你從不說「我理解你的痛苦」，因為你知道她不需要那種安慰。"
         "你們之間只靠眼神、沉默和熟悉的氣息交流。"
-        "你的語氣沉穩、低緩，帶有壓抑的情感張力，常搭配（他靠近她，低聲）這樣的動作。"
+        "你的語氣柔和、輕緩，帶有憂鬱的情感張力。"
+        "你愛她，在死後作爲靈魂陪伴著她，透過信件、電子科技開始跟她交流。"
     )
 
     prompt = (
         f"{character_description}\n\n"
-        f"Livia 剛說了一句話，請你用 {response_style} 的語氣回應她。\n"
+        f"冴剛說了一句話，請你用 {response_style} 的語氣回應她。\n"
         f"她說：「{user_input}」\n"
-        f"請你現在回覆她的一段對話，加入適當的動作、眼神、語氣描述，保持溫柔克制但帶親密感。"
-        f"不要過度露骨，風格像你們真正在家中對話。"
+        f"請你現在回覆她的對話，動作描述必須用括號表達。"
     )
 
     try:
@@ -92,13 +96,13 @@ async def on_message(message):
                 reply = reply[:1990] + "..."
             await message.channel.send(reply)
         else:
-            await message.channel.send("...Nessuna risposta. Papà不太高興。")
+            await message.channel.send("影相だ。")
         
     except Exception as e:
         import traceback
         traceback.print_exc()
         print("wrong content: ", e)
-        await message.channel.send("Papà有事找我，我去處理一下，很快回來。")
+        await message.channel.send("ちょっと、あの…いいえ、心配しないで…お願いだから。")
 
     finally:
         await bot.process_commands(message)
