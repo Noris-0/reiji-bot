@@ -121,58 +121,67 @@ def get_school_class_items(now):
 # scheduled messages
 @tasks.loop(minutes=1)
 async def scheduled_messages():
-    now = datetime.datetime.now(TZ)
-    current_time = now.strftime('%H:%M')
+    try:
+        now = datetime.datetime.now(TZ)
+        current_time = now.strftime('%H:%M')
 
-    channel = bot.get_channel(CHANNEL_ID)
-    if not channel:
-        try:
+        print(f"[Tick] now={now.isoformat()} time = {current_time}", flush=True)
+
+        channel = bot.get_channel(CHANNEL_ID)
+        if not channel:
             channel = await bot.fetch_channel(CHANNEL_ID)
-            print("[CHANNEL] fetched channel OK")
-        except Exception as e:
-            print("[CHANNEL] cannot get/fetch channel:", e)
-            return
-    
-    holiday = is_school_holiday(now)
+            print("[CHANNEL] fetched channel OK", flush=True)
+        
+        holiday = is_school_holiday(now)
 
-    # Main timeline selection
-    # 1. School holiday -> check specialday; if not specialday -> daily
-    # 2. non-holiday -> specialday -> special schedule; else schoolday -> schoolday main; else daily
+        # Main timeline selection
+        # 1. School holiday -> check specialday; if not specialday -> daily
+        # 2. non-holiday -> specialday -> special schedule; else schoolday -> schoolday main; else daily
 
-    special_schedule = get_today_special_schedule(now)
-    # allow special days even on school holidays
-    schoolday_main = None if holiday else get_schoolday_main_items(now)
+        special_schedule = get_today_special_schedule(now)
+        # allow special days even on school holidays
+        schoolday_main = None if holiday else get_schoolday_main_items(now)
 
-    print(
-        f"[Tick] now={now} time = {current_time}"
-        f"holiday = {holiday} special ={'Y' if special_schedule is not None else 'N'}"
-        f"schoolday_main = {'Y' if schoolday_main is not None else 'N'}"
-        f"main_len = {len(main_schedule) if 'main_schedule' in locals() else 'NA'}"
-    )
+        if special_schedule is not None:
+            main_schedule = special_schedule
+            chosen = "special"
+        elif holiday:
+            main_schedule = SCHEDULES.get("daily", [])
+            chosen = "holiday_daily"
+        elif schoolday_main is not None:
+            main_schedule = schoolday_main
+            chosen = "schoolday"
+        else:
+            main_schedule = SCHEDULES.get("daily", [])
+            chosen = "daily"
 
-    if special_schedule is not None:
-        main_schedule = special_schedule
-    elif holiday:
-        main_schedule = SCHEDULES.get("daily", [])
-    elif schoolday_main is not None:
-        main_schedule = schoolday_main
-    else:
-        main_schedule = SCHEDULES.get("daily", [])
-    
-    print(f"[MAIN] chose = {'special' if special_schedule is not None else ('holiday_daily' if holiday else ('schoolday' if schoolday_main is not None else 'daily'))}")
-
-    # Send all items in the chosen main schedule that match this minute
-    for item in main_schedule:
-        if match_item(item, now, current_time):
-            await send_item(channel, item)
-    
-    # class reminders: only if schoolday AND not holiday
-    if not holiday:
-        class_items = get_school_class_items(now)
-        if class_items:
-            for item in class_items:
-                if match_item(item, now, current_time):
-                    await send_item(channel, item)  
+        print(
+            f"[MAIN] chose ={chosen} holiday={holiday}"
+            f"special ={'Y' if special_schedule is not None else 'N'}"
+            f"schoolday_main = {'Y' if schoolday_main is not None else 'N'}"
+            f"main_len = {len(main_schedule)}",
+            flush=True
+        )
+        
+        hit = 0
+        # Send all items in the chosen main schedule that match this minute
+        for item in main_schedule:
+            if match_item(item, now, current_time):
+                hit += 1
+                await send_item(channel, item)
+        
+        # class reminders: only if schoolday AND not holiday
+        if not holiday:
+            class_items = get_school_class_items(now)
+            if class_items:
+                for item in class_items:
+                    if match_item(item, now, current_time):
+                        hit += 1
+                        await send_item(channel, item)  
+        print(f"[TICK] done. hits={hit}", flush=True)
+    except Exception:
+        traceback.print_exc()
+        print("[LOOP ERROR] scheduled_messages crashed this tick", flush=True)
 
 @bot.event
 async def on_ready():
