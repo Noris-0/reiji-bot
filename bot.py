@@ -42,8 +42,11 @@ def match_item(item, now, current_time):
     # weekday:0=Mon, 6=Sun
     if "weekday" in item and now.weekday() not in _as_list(item["weekday"]):
         return False
+    if "month" in item and now.month() not in _as_list(item["month"]):
+        return False
     if "day" in item and now.day not in _as_list(item["day"]):
         return False
+    
     return True
 
 async def send_item(channel, item):
@@ -52,6 +55,7 @@ async def send_item(channel, item):
     msgs = item.get("messages", []) or []
     if not msgs:
         return
+    
     if mode == "random":
         await channel.send(random.choice(msgs))
     else:
@@ -61,8 +65,8 @@ async def send_item(channel, item):
 
 def is_school_holiday(now):
     """School holiday rules live in SCHEDULES[world][school_holiday] as list of {month:[], day:[]}"""
-    world = SCHEDULES.get("world", {})
-    rules = world.get("school_holiday", [])
+    world = SCHEDULES.get("world", {}) or {}
+    rules = world.get("school_holiday", []) or []
     for rule in rules:
         months = rule.get("month")
         days = rule.get("day")
@@ -75,25 +79,26 @@ def is_school_holiday(now):
 
 def get_today_special_schedule(now):
     """Return the special day schedule list if today matches any special day, otherwise None"""
-    for sd in SCHEDULES.get("special_day", []):
+    for sd in SCHEDULES.get("special_days", []) or []:
         months = sd.get("month")
         days = sd.get("day")
         if months is not None and now.month not in _as_list(months):
             continue
         if days is not None and now.day not in _as_list(days):
             continue
-        return sd.get("schedule", [])
+        return sd.get("schedule", []) or []
     return None
 
-def _iter_terms(maybe_terms):
+def _iter_terms(container):
     """Äccepts: list of terms:[{},{}] and single term dict: {}"""
     """Return an iterator of term dicts"""
-    if maybe_terms is None:
+    if container is None:
         return []
-    if isinstance(maybe_terms, dict):
-        return [maybe_terms]
-    if isinstance(maybe_terms, list):
-        return maybe_terms
+    if isinstance(container, dict):
+        return [container]
+    if isinstance(container, list):
+        return container
+    raise TypeError(f"Invalid terms container type: {type(container)}. Expected dict or list.")
     
 def get_schoolday_main_items(now):
     """"Return the list of schoolday main items for today's weekday, or None if today is not a schoolday"""
@@ -102,9 +107,9 @@ def get_schoolday_main_items(now):
         schooldays = _as_list(term.get("schooldays", []))
         if now.weekday() not in schooldays:
             continue
-        schedule_by_weekday = term.get("schedule_by_weekday", {})
+        schedule_by_weekday = term.get("schedule_by_weekday", {}) or {}
         return
-    schedule_by_weekday.get(now.weekday(), [])
+    schedule_by_weekday.get(now.weekday(), []) or []
     return None
 
 def get_school_class_items(now):
@@ -114,9 +119,8 @@ def get_school_class_items(now):
         schooldays = _as_list(term.get("schooldays", []))
         if now.weekday() not in schooldays:
             continue
-        schedule_by_weekday = term.get("schedule_by_weekday", {})
-        return
-    schedule_by_weekday.get(now.weekday(), [])
+        schedule_by_weekday = term.get("schedule_by_weekday", {}) or {}
+        return schedule_by_weekday.get(now.weekday(), []) or []
     return None
 
 # scheduled messages
