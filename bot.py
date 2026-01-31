@@ -11,6 +11,7 @@ from keep_alive import keep_alive
 from dotenv import load_dotenv
 from schedules import SCHEDULES
 # import
+print("BOOT: starting bot.py")
 
 load_dotenv()
 
@@ -167,8 +168,8 @@ async def scheduled_messages():
 
 @bot.event
 async def on_message(message):
-    # if message.author == bot.user:
-    #     return
+    if message.author == bot.user:
+        return
 
     if message.channel.id != CHANNEL_ID:
         print(f"got message: {message.content} from {message.author.name}")
@@ -229,4 +230,5 @@ async def on_message(message):
 
 if __name__ == "__main__":
     keep_alive()
+    print("BOOT: about to login", bool(TOKEN))
     bot.run(TOKEN)
