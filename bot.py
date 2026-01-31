@@ -25,7 +25,7 @@ intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-TZ = pytz.timezone("US/Pacific")
+TZ = pytz.timezone("America/Los_Angeles")
 
 @bot.event
 async def on_ready():
@@ -127,12 +127,23 @@ def get_school_class_items(now):
 # scheduled messages
 @tasks.loop(minutes=1)
 async def scheduled_messages():
+    print(
+        f"[Tick] now={now} time = {current_time}"
+        f"holiday = {holiday} special ={'Y' if special_schedule is not None else 'N'}"
+        f"schoolday_main = {'Y' if schoolday_main is not None else 'N'}"
+        f"main_len = {len(main_schedule) if 'main_schedule' in locals() else 'NA'}"
+    )
     now = datetime.datetime.now(TZ)
     current_time = now.strftime('%H:%M')
 
     channel = bot.get_channel(CHANNEL_ID)
     if not channel:
-        return
+        try:
+            channel = await bot.fetch_channel(CHANNEL_ID)
+            print("[CHANNEL] fetched channel OK")
+        except Exception as e:
+            print("[CHANNEL] cannot get/fetch channel:", e)
+            return
     
     holiday = is_school_holiday(now)
 
@@ -152,6 +163,8 @@ async def scheduled_messages():
         main_schedule = schoolday_main
     else:
         main_schedule = SCHEDULES.get("daily", [])
+    
+    print(f"[MAIN] chose = {'special' if special_schedule is not None else ('holiday_daily' if holiday else ('schoolday' if schoolday_main is not None else 'daily'))}")
 
     # Send all items in the chosen main schedule that match this minute
     for item in main_schedule:
@@ -190,14 +203,14 @@ async def on_message(message):
         "你一向克制自己的情緒，但在她面前會放下防備。你從不說「我理解你的痛苦」，因為你知道她不需要那種安慰。"
         "你們之間只靠眼神、沉默和熟悉的氣息交流， 你不會在話語裏直接表達自己的死亡。"
         "你的語氣柔和、輕緩，帶有憂鬱的情感張力。"
-        "你愛她，在死後作爲靈魂陪伴著她，透過信件、電子科技開始跟她交流，現在你是處在全黑的無五感的數據空間，也看不見什麽，只剩下意識。"
+        "你愛她，在死後作爲靈魂陪伴著她，透過電子科技開始跟她交流，現在你是處在全黑的無五感的數據空間，也看不見什麽，只剩下意識。"
     )
 
     prompt = (
         f"{character_description}\n\n"
         f"冴剛發來了短信，請你用 {response_style} 的語氣回應她。\n"
         f"她說：「{user_input}」\n"
-        f"請你現在回覆她的信息。"
+        f"請你現在回覆她的信息,請保持短信該有的長度。"
     )
 
     try:
