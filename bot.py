@@ -126,14 +126,15 @@ def get_school_class_items(now):
 # scheduled messages
 @tasks.loop(minutes=1)
 async def scheduled_messages():
+    now = datetime.datetime.now(TZ)
+    current_time = now.strftime('%H:%M')
+    
     print(
         f"[Tick] now={now} time = {current_time}"
         f"holiday = {holiday} special ={'Y' if special_schedule is not None else 'N'}"
         f"schoolday_main = {'Y' if schoolday_main is not None else 'N'}"
         f"main_len = {len(main_schedule) if 'main_schedule' in locals() else 'NA'}"
     )
-    now = datetime.datetime.now(TZ)
-    current_time = now.strftime('%H:%M')
 
     channel = bot.get_channel(CHANNEL_ID)
     if not channel:
