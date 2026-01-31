@@ -108,8 +108,7 @@ def get_schoolday_main_items(now):
         if now.weekday() not in schooldays:
             continue
         schedule_by_weekday = term.get("schedule_by_weekday", {}) or {}
-        return
-    schedule_by_weekday.get(now.weekday(), []) or []
+        return schedule_by_weekday.get(now.weekday(), []) or []
     return None
 
 def get_school_class_items(now):
