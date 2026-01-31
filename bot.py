@@ -6,6 +6,7 @@ import datetime
 import pytz
 import os
 import random
+import traceback
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from schedules import SCHEDULES
@@ -25,11 +26,6 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 TZ = pytz.timezone("America/Los_Angeles")
-
-@bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user}')
-    scheduled_messages.start()
 
 # helper function 
 def _as_list(x):
@@ -177,6 +173,20 @@ async def scheduled_messages():
             for item in class_items:
                 if match_item(item, now, current_time):
                     await send_item(channel, item)  
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user}', flush=True)
+    if not scheduled_messages.is_running():
+        scheduled_messages.start()
+        print("[LOOP] scheduled_messages started", flush=True)
+    else:
+        print("[LOOP] already running", flush=True)
+
+@scheduled_messages.before_loop
+async def before_scheduled_messages():
+    await bot.wait_until_ready()
+    print("[LOOP] before_loop: bot is ready", flush=True)
 
 @bot.event
 async def on_message(message):
