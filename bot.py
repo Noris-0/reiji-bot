@@ -7,7 +7,6 @@ import pytz
 import os
 import random
 from discord.ext import commands, tasks
-from keep_alive import keep_alive
 from dotenv import load_dotenv
 from schedules import SCHEDULES
 # import
@@ -242,6 +241,5 @@ async def on_message(message):
         await bot.process_commands(message)
 
 if __name__ == "__main__":
-    keep_alive()
     print("BOOT: about to login", bool(TOKEN))
     bot.run(TOKEN)
